@@ -15,25 +15,25 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @Entity
-@EntityListeners(AuditingEntityListener.class)
+@EntityListeners(AuditingEntityListener.class)/*자동으로 증가하는 값을 인식하기 위한 어노테이션 JpaAuditingConfiguration로 관리*/
 public class Account {
     @Id
     @GeneratedValue
-    private Long id;    /*pk*/
+    private Long id;    /*pk 검색할 키, 순차적으로 증가하는 값*/
     @ManyToOne
-    private AccountUser accountUser; /*소유자 정보 사용자 테이블과 n:1*/
+    private AccountUser accountUser; /*소유자 정보 사용자 테이블과 n:1 계좌n개가 사용자 1명과 연결, 다른 서비스 사용자와 차별 위해 Account전용 user테이블 설계*/
 
     private String accountNumber;   /*계좌번호*/
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.STRING)/*이렇게 설정해야 DB에 숫자가 아닌 IN_USE, UNREGISTERED 값이 등록된다*/
     private AccountStatus accountStatus; /*계좌상태 IN_USE, UNREGISTERED*/
 
     private Long balance; /*계좌잔액*/
     private LocalDateTime registeredAt;   /*계좌등록일시*/
     private LocalDateTime unregisteredAt;/*계좌해지일시*/
 
-    @CreatedDate
+    @CreatedDate/*자동으로 저장*/
     private LocalDateTime createdAt;/*생성일시*/
-    @LastModifiedDate
+    @LastModifiedDate/*자동으로 저장*/
     private LocalDateTime updatedAt;/*최종수정일시*/
 }

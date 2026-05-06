@@ -1,18 +1,25 @@
 package com.example.account.controller;
 
 import com.example.account.domain.Account;
+import com.example.account.dto.AccountDto;
+import com.example.account.dto.CreateAccount;
 import com.example.account.type.AccountStatus;
 import com.example.account.service.AccountService;
 import com.example.account.service.RedisTestService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static java.time.LocalDateTime.now;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -26,6 +33,34 @@ class AccountControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Test //테스트코드용
+    void successCreateAccount() throws Exception {
+        //given
+        given(accountService.createAccount(anyLong(), anyLong()))
+                .willReturn(AccountDto.builder()
+                                .userId(1L)
+                                .accountNumber("123456789")
+                                .registeredAt(now())
+                                .unregisteredAt(now())
+                                .build());
+        //when
+        //then
+        mockMvc.perform(post("/account")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new CreateAccount.Request(333L, 100L)
+                        )))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(1))
+                .andExpect(jsonPath("$.accountNumber").value("123456789"))
+                .andDo(print());
+    }
+
+
 
     @Test//테스트코드용
     void successGetAccount() throws Exception {

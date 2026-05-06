@@ -14,19 +14,19 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 @Entity
-@EntityListeners(AuditingEntityListener.class)
-public class AccountUser {
+@EntityListeners(AuditingEntityListener.class)/*자동으로 증가하는 값을 인식하기 위한 어노테이션 JpaAuditingConfiguration로 관리\*/
+public class AccountUser {//계좌 사용자 정보
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)//자동으로 값을 생성해준다
     private Long id;
 
     private String name;
 
-    @CreatedDate
-    private LocalDateTime createdAt;
+    @CreatedDate/*자동으로 저장*/
+    private LocalDateTime createdAt;//테이블의 메타정보
 
-    @LastModifiedDate
-    private LocalDateTime updatedAt ;
+    @LastModifiedDate/*자동으로 저장*/
+    private LocalDateTime updatedAt;//테이블의 메타정보
 
 
 }

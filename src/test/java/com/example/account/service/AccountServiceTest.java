@@ -1,6 +1,9 @@
 package com.example.account.service;
 
 import com.example.account.domain.Account;
+import com.example.account.domain.AccountUser;
+import com.example.account.dto.AccountDto;
+import com.example.account.repository.AccountUserRepository;
 import com.example.account.type.AccountStatus;
 import com.example.account.repository.AccountRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -25,6 +28,9 @@ import static org.mockito.Mockito.verify;
 class AccountServiceTest {
     @Mock
     private AccountRepository accountRepository;
+
+    @Mock
+    private AccountUserRepository accountUserRepository;
 
     @InjectMocks
     private AccountService accountService;
@@ -62,7 +68,7 @@ class AccountServiceTest {
     @DisplayName("Test 이름 변경")
     void getAccount() {
         //given
-        accountService.createAccount();
+        accountService.createAccount(anyLong(), anyLong());
         //when
         Account account = accountService.getAccount(1L);
         //then
@@ -74,12 +80,35 @@ class AccountServiceTest {
     @Test //테스트코드용
     void getAccount2() {
         //given
-        accountService.createAccount();
+        accountService.createAccount(anyLong(), anyLong());
         //when
         Account account = accountService.getAccount(2L);
         //then
         assertEquals("40000", account.getAccountNumber());
         assertEquals(AccountStatus.IN_USE, account.getAccountStatus());
 
+    }
+
+    @Test
+    void createAccountSuccess() {
+        //given
+        AccountUser user = AccountUser.builder()
+                .id(12L)
+                .name("Pobi").build();
+        given(accountUserRepository.findById(anyLong()))
+                .willReturn(Optional.of(user));
+        given(accountRepository.findFirstByOrderByIdDesc())
+                .willReturn(Optional.of(Account.builder()
+                        .accountNumber("100000012").build()));
+        given(accountRepository.save(any()))
+                .willReturn(Account.builder()
+                        .accountUser(user)
+                        .accountNumber("100000013").build());
+        //when
+        AccountDto accountDto = accountService.createAccount(1L, 1000L);
+
+        //then
+        assertEquals(12L, accountDto.getUserId());
+        assertEquals("100000013", accountDto.getAccountNumber());
     }
 }
