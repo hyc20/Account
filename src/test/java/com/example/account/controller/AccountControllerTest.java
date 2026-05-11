@@ -3,6 +3,7 @@ package com.example.account.controller;
 import com.example.account.domain.Account;
 import com.example.account.dto.AccountDto;
 import com.example.account.dto.CreateAccount;
+import com.example.account.dto.DeleteAccount;
 import com.example.account.type.AccountStatus;
 import com.example.account.service.AccountService;
 import com.example.account.service.RedisTestService;
@@ -17,13 +18,16 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static java.time.LocalDateTime.now;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+//MockitoBean들을 AccountController와 함께 테스트 컨트롤러에 등록한다
+//accountService, redisTestService가 AccountController에 주입된다
+//주입된 Mvc 상대로 테스트를 날린다
 @WebMvcTest(AccountController.class)
 class AccountControllerTest {
     @MockitoBean
@@ -40,24 +44,27 @@ class AccountControllerTest {
     @Test //테스트코드용
     void successCreateAccount() throws Exception {
         //given
-        given(accountService.createAccount(anyLong(), anyLong()))
-                .willReturn(AccountDto.builder()
-                                .userId(1L)
-                                .accountNumber("123456789")
-                                .registeredAt(now())
-                                .unregisteredAt(now())
-                                .build());
+        given(accountService.createAccount(anyLong(), anyLong()))//createAccout로 AccoutDto를 만들고
+                .willReturn(AccountDto.builder()//그 만든 AccoutDto는
+                                .userId(1L)      //userId가 1
+                                .accountNumber("123456789")//계좌번호가 1234567889
+                                .registeredAt(now())//등록일이 지금
+                                .unregisteredAt(now())//계좌해제일이 지금
+                                .build());//그 정보로 AccountDto를 빌드한다
         //when
         //then
+        //mockMvc에 post로 accout 요청을 날리는데
         mockMvc.perform(post("/account")
-                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)//json 타입으로
                         .content(objectMapper.writeValueAsString(
+                                //요청은 Request를 objectMapper로 문자열로 변환하여 넣는다
+                                //writeValueAsString은 Exception을 필요로 한다
                                 new CreateAccount.Request(333L, 100L)
                         )))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.userId").value(1))
-                .andExpect(jsonPath("$.accountNumber").value("123456789"))
-                .andDo(print());
+                .andExpect(status().isOk())//예상 결과는 ok
+                .andExpect(jsonPath("$.userId").value(1))//userId는 1
+                .andExpect(jsonPath("$.accountNumber").value("123456789"))//계좌번호는 123456789이다
+                .andDo(print());//그 결과를 출력한다
     }
 
 
@@ -78,5 +85,33 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.accountStatus").value("IN_USE"))
                 .andExpect(status().isOk());
     }
+
+
+    @Test //테스트코드용
+    void successDeleteAccount() throws Exception {
+        //given
+        given(accountService.deleteAccount(anyLong(), anyString()))//createAccout로 AccoutDto를 만들고
+                .willReturn(AccountDto.builder()//그 만든 AccoutDto는
+                        .userId(1L)      //userId가 1
+                        .accountNumber("1234567890")//계좌번호가 1234567889
+                        .registeredAt(now())//등록일이 지금
+                        .unregisteredAt(now())//계좌해제일이 지금
+                        .build());//그 정보로 AccountDto를 빌드한다
+        //when
+        //then
+        //mockMvc에 post로 accout 요청을 날리는데
+        mockMvc.perform(delete("/account")
+                        .contentType(MediaType.APPLICATION_JSON)//json 타입으로
+                        .content(objectMapper.writeValueAsString(
+                                //요청은 Request를 objectMapper로 문자열로 변환하여 넣는다
+                                //writeValueAsString은 Exception을 필요로 한다
+                                new DeleteAccount.Request(333L, "1234567890")
+                        )))
+                .andExpect(status().isOk())//예상 결과는 ok
+                .andExpect(jsonPath("$.userId").value(1))//userId는 1
+                .andExpect(jsonPath("$.accountNumber").value("1234567890"))//계좌번호는 123456789이다
+                .andDo(print());//그 결과를 출력한다
+    }
+
 
 }

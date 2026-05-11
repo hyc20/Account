@@ -9,12 +9,19 @@ import com.example.account.repository.AccountUserRepository;
 import com.example.account.type.AccountStatus;
 import com.example.account.type.ErrorCode;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
+import java.util.Optional;
 
 import static com.example.account.type.AccountStatus.IN_USE;
+import static com.example.account.type.AccountStatus.UNREGISTERED;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +47,10 @@ public class AccountService {
                 //값이 없는 경우 커스텀 exception AccountException 던진다
                 .orElseThrow(() -> new AccountException(ErrorCode.USER_NOT_FOUND));
 
+        //1명의 계좌가 10개인 경우 exception 발생
+        validateCreatAccoutn(accountUser);
+
+
         //계좌번호 생성
         //findFirstByOrderByIdDesc로 가장 최근의 값을 가져와서 새로 계좌번호를 새로 만든다
         String newAccountNumber =  accountRepository.findFirstByOrderByIdDesc()
@@ -47,7 +58,7 @@ public class AccountService {
                         //가장 마지막 계좌번호 가져와서 +1 한 값을 String으로 바꾼다
                         (Integer.parseInt(account.getAccountNumber()))+1+"")
                 //만약 계좌번호 값이 없다면 계좌번호를 "100000000"로 설정한다
-                .orElse("100000000");
+                .orElse("1000000000");
 
         //계좌정보를 컨트롤러 쪽으로 넘긴다
         //save는 Entity 클래스 사용할 때 트랜잭션이 없어서 오류가 날 수 있고
@@ -65,6 +76,12 @@ public class AccountService {
                         .build()));
     }
 
+    private void validateCreatAccoutn(AccountUser accountUser) {
+        if(accountRepository.countByAccountUser(accountUser)>=10){
+            throw new AccountException(ErrorCode.MAX_COUND_PER_USER_10);
+        }
+    }
+
     @Transactional
     public Account getAccount(Long id){
         if(id < 0){
@@ -73,4 +90,35 @@ public class AccountService {
         return accountRepository.findById(id).get();
     }
 
+    @Transactional
+    public AccountDto deleteAccount(Long userId, String accountNumber) {
+        AccountUser accountUser = accountUserRepository.findById(userId)
+                //값이 없는 경우 커스텀 exception AccountException 던진다
+                .orElseThrow(() -> new AccountException(ErrorCode.USER_NOT_FOUND));
+
+        //계좌번호 찾기
+        Account account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(()-> new AccountException(ErrorCode.ACCOUNT_NOT_FOUND));
+
+        validateDeleteAccount(accountUser, account);
+
+        account.setAccountStatus(UNREGISTERED);
+        account.setUnregisteredAt(LocalDateTime.now());
+
+        return  AccountDto.fromEntity(account);
+    }
+
+    private void validateDeleteAccount(AccountUser accountUser, Account account) {
+        if(!Objects.equals(accountUser.getId(), account.getAccountUser().getId())){
+            throw new AccountException(ErrorCode.USER_ACCOUNT_UNMATCHED);
+        }
+
+        if (account.getAccountStatus().equals(UNREGISTERED)) {
+            throw new AccountException(ErrorCode.ACCOUNT_ALREADY_UNREGISTRED);
+        }
+
+        if(account.getBalance() > 0 ){
+            throw new AccountException(ErrorCode.ACCOUNT_HAS_BALANACE);
+        }
+    }
 }
