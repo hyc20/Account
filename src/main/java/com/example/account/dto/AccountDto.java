@@ -24,6 +24,7 @@ public class AccountDto {
         return AccountDto.builder()
                 .userId(account.getAccountUser().getId())//그냥 getId를 하면 nullexception 난다
                 .accountNumber(account.getAccountNumber())
+                .balance(account.getBalance())
                 .registeredAt(account.getRegisteredAt())
                 .unregisteredAt(account.getUnregisteredAt())
                 .build();

@@ -16,6 +16,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static java.time.LocalDateTime.now;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -113,5 +116,29 @@ class AccountControllerTest {
                 .andDo(print());//그 결과를 출력한다
     }
 
+    @Test
+    void successGetAccountById() throws Exception {
+        //given
+        List<AccountDto> accountDtoList = Arrays.asList(
+                AccountDto.builder().accountNumber("1234567890").balance(1000L).build(),
+                AccountDto.builder().accountNumber("1111111111").balance(2000L).build(),
+                AccountDto.builder().accountNumber("2222222222").balance(3000L).build()
+                );
+        given(accountService.getAccountsByUserId(anyLong()))
+                .willReturn(accountDtoList);
+
+        //when
+
+        //then
+        mockMvc.perform(get("/account?user_id=1"))
+                .andDo(print())
+                .andExpect(jsonPath("$[0].accountNumber").value("1234567890"))
+                .andExpect(jsonPath("$[0].balance").value(1000L))
+                .andExpect(jsonPath("$[1].accountNumber").value("1111111111"))
+                .andExpect(jsonPath("$[1].balance").value(2000L))
+                .andExpect(jsonPath("$[2].accountNumber").value("2222222222"))
+                .andExpect(jsonPath("$[2].balance").value(3000L));
+
+    }
 
 }

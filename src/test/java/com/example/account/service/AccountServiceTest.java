@@ -17,6 +17,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -252,5 +254,54 @@ class AccountServiceTest {
         //then
         assertEquals(ErrorCode.ACCOUNT_NOT_FOUND, accountException.getErrorCode());
     }
+
+    @Test //테스트코드용
+    void successGetAccountByUserId() {
+        //given
+        //AccountUser를 만드는데 id는 12, 이름은 Pobi로 만든다
+        AccountUser user = AccountUser.builder()
+                .id(12L)
+                .name("Pobi").build();
+        List<Account>  accounts = Arrays.asList(
+                Account.builder().accountNumber("1111111111")
+                        .accountUser(user)
+                        .balance(1000L).build(),
+                Account.builder().accountNumber("2222222222")
+                        .accountUser(user)
+                        .balance(2000L).build(),
+                Account.builder().accountNumber("3333333333")
+                        .accountUser(user)
+                        .balance(3000L).build());
+
+        given(accountUserRepository.findById(anyLong())) //accountUserRepository에서 id로 유저를 찾으면
+                .willReturn(Optional.of(user));//찾은 유저를 넘겨주면 테스트 결과를 넘긴다
+        given(accountRepository.findByAccountUser(any()))
+                .willReturn(accounts);
+
+        //when
+        List<AccountDto> accountDtoList = accountService.getAccountsByUserId(user.getId());
+
+        //then
+        assertEquals(3, accountDtoList.size());
+        assertEquals("1111111111", accountDtoList.get(0).getAccountNumber());
+        assertEquals(1000L, accountDtoList.get(0).getBalance());
+        assertEquals("2222222222", accountDtoList.get(1).getAccountNumber());
+        assertEquals(2000L, accountDtoList.get(1).getBalance());
+        assertEquals("3333333333", accountDtoList.get(2).getAccountNumber());
+        assertEquals(3000L, accountDtoList.get(2).getBalance());
+    }
+
+    @Test //테스트코드용
+    void failGetAccountByUserId() {
+        //given
+        given(accountUserRepository.findById(anyLong())) //accountUserRepository에서 id로 유저를 찾으면
+                .willReturn(Optional.empty());//찾은 유저를 넘겨주면 테스트 결과를 넘긴다
+        //when
+        AccountException accountException = assertThrows(AccountException.class, () -> accountService.getAccountsByUserId(anyLong()));
+
+        //then
+        assertEquals(ErrorCode.USER_NOT_FOUND, accountException.getErrorCode());
+    }
+
 
 }
