@@ -1,5 +1,6 @@
 package com.example.account.controller;
 
+import com.example.account.aop.AccountLock;
 import com.example.account.dto.CancelBalance;
 import com.example.account.dto.QueryTransactionResponse;
 import com.example.account.dto.TransactionDto;
@@ -27,10 +28,11 @@ public class TransactionController {
 
 
     @PostMapping("/transaction/use")
+    @AccountLock
     public UseBalance.Response useBalance(
-            @Valid @RequestBody UseBalance.Request request) {
-
+            @Valid @RequestBody UseBalance.Request request) throws InterruptedException {
         try {
+            Thread.sleep(5000L);//2개의 요청을 보내는 것은 까다롭기에 스레드 sleep을 사용
             return UseBalance.Response.fromEntity(transactionService.useBalance(request.getUserId(),
                     request.getAccountNumber(), request.getAmount()));
         } catch (AccountException e) {
@@ -45,6 +47,7 @@ public class TransactionController {
     }
 
     @PostMapping("/transaction/cancel")
+    @AccountLock
     public CancelBalance.Response useCancel(
             @Valid @RequestBody CancelBalance.Request request) {
 

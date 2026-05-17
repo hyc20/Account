@@ -17,7 +17,8 @@ public enum ErrorCode {
     TRANSACTION_ACCOUNT_UNMATCH("이 거래는 해당 계좌에서 발생한 거래가 아닙니다"),
     CANCEL_MUST_FULLY("부분 취소는 허용되지 않습니다."),
     INVALID_REQUEST("잘못된 요청입니다"),
-    TRANSACTION_NOT_FOUND("해당 거래가 없습니다");
+    TRANSACTION_NOT_FOUND("해당 거래가 없습니다"),
+    ACCOUNT_TRANSACTION_LOCK("해당 계좌는 사용중입니다.");
 
     private final String description;
 }
