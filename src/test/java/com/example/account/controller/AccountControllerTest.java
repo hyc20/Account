@@ -102,7 +102,7 @@ class AccountControllerTest {
                         .build());//그 정보로 AccountDto를 빌드한다
         //when
         //then
-        //mockMvc에 post로 accout 요청을 날리는데
+        //mockMvc에 post로 accout 요청을 날 리는데
         mockMvc.perform(delete("/account")
                         .contentType(MediaType.APPLICATION_JSON)//json 타입으로
                         .content(objectMapper.writeValueAsString(

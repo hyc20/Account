@@ -169,6 +169,36 @@ class AccountServiceTest {
         assertEquals(ErrorCode.USER_NOT_FOUND, accountException.getErrorCode());
     }
 
+
+    @Test
+    @DisplayName("계좌 소유주 다름")
+    void deleteAccountFailed_UserUnMatch() {
+        //given
+        AccountUser pobi = AccountUser.builder()
+                .id(12L)
+                .name("Pobi").build();
+        AccountUser harry = AccountUser.builder()
+                .id(13L)
+                .name("harry").build();
+
+        given(accountUserRepository.findById(anyLong())) //accountUserRepository에서 id로 유저를 찾으면
+                .willReturn(Optional.of(pobi));//찾은 유저를 넘겨주면 테스트 결과를 넘긴다
+
+        given(accountRepository.findByAccountNumber(anyString())) //accountUserRepository에서 id로 유저를 찾으면
+                .willReturn(Optional.of(Account.builder()
+                        .accountUser(harry)
+                        .balance(0L)
+                        .accountNumber("1000000012").build()));//유저가 없을 경우
+
+        //when
+        //유저가 없는 경유 exception 발생
+        AccountException accountException = assertThrows(AccountException.class, ()
+                -> accountService.deleteAccount(1L, "1234567890"));
+
+        //then
+        assertEquals(ErrorCode.USER_ACCOUNT_UNMATCHED, accountException.getErrorCode());
+    }
+
     @Test //테스트코드용
     @DisplayName("유저 당 계좌 쵀대 수는 10")
     void createAccount_maxAccountIs10() {
@@ -303,5 +333,26 @@ class AccountServiceTest {
         assertEquals(ErrorCode.USER_NOT_FOUND, accountException.getErrorCode());
     }
 
+    @Test
+    void deleteAccountFailed_alreadyUnregistered() {
+        //given
+        AccountUser pobi = AccountUser.builder()
+                .id(12L)
+                .name("Pobi").build();
+        given(accountUserRepository.findById(anyLong())) //accountUserRepository에서 id로 유저를 찾으면
+                .willReturn(Optional.of(pobi));//찾은 유저를 넘겨주면 테스트 결과를 넘긴다
+
+        given(accountRepository.findByAccountNumber(anyString()))//accountRepository에서 아이디로 오름차순정리한 것으로 계좌를 찾으면
+                .willReturn(Optional.of(Account.builder()
+                        .accountUser(pobi)//  accountNumber가 100000012인 값을 가진 Account를 리턴한다
+                        .balance(0L)
+                        .accountStatus(AccountStatus.UNREGISTERED)
+                        .accountNumber("100000012").build()));
+
+        //when
+        AccountException accountException = assertThrows(AccountException.class,
+                () -> accountService.deleteAccount(1L, "1234567890"));
+        assertEquals(ErrorCode.ACCOUNT_ALREADY_UNREGISTRED, accountException.getErrorCode());
+    }
 
 }
