@@ -437,10 +437,43 @@ class TransactionServiceTest {
 
         //when
         //거래가 없는 경유 exception 발생
-        AccountException accountException = assertThrows(AccountException.class, ()
-                -> transactionService.cancelBalance("transactionId", "1000000000", 1000L));
+                AccountException accountException = assertThrows(AccountException.class, ()
+                        -> transactionService.cancelBalance("transactionId", "1000000000", 1000L));
 
         //then
         assertEquals(ErrorCode.TOO_OLD_TO_CANCEL, accountException.getErrorCode());
     }
+
+    @Test //테스트코드용
+    void successQueryTransaction() {
+        AccountUser pobi = AccountUser.builder()
+                .id(12L)
+                .name("Pobi").build();
+        Account account = Account.builder()
+                .id(1L)
+                .accountUser(pobi)
+                .accountNumber("1000000012")
+                .accountStatus(AccountStatus.IN_USE)
+                .balance(10000L).build();
+        Transaction transaction = Transaction.builder()
+                .account(account)
+                .transactionType(TransactionType.USE)
+                .transactionResultType(TransactionResultType.SUCCESS)
+                .transactionId("transactionId")
+                .transactedAt(LocalDateTime.now().minusYears(1).minusDays(1))
+                .amount(1000L)
+                .balanceSnpaShot(9000L).build();
+        given(transactionRepository.findByTransactionId(anyString()))
+                .willReturn(Optional.of(transaction));
+
+        //when
+        TransactionDto transactionDto = transactionService.queryTransaction("trxId");
+
+        //then
+        assertEquals(TransactionType.USE, transactionDto.getTransactionType());
+        assertEquals("1000000012", transaction.getAccount().getAccountNumber());
+        assertEquals(TransactionResultType.SUCCESS, transactionDto.getTransactionResultType());
+        assertEquals(1000L, transactionDto.getAmount());
+    }
+
 }
